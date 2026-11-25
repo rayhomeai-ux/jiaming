@@ -89,7 +89,7 @@
     try {
       var j = await call({ op: 'list' });
       if (!j.ok) {
-        CFG.why = j.error === 'bad_code' ? '家族通關碼不正確，請重新輸入。' : '投票後端回應錯誤（' + j.error + '）。';
+        CFG.why = j.error === 'bad_code' ? '家族通關碼不正確，請重新輸入。' : j.error === 'locked' ? '通關碼錯誤次數太多，已暫時鎖定，請 10 分鐘後再重新整理。' : '投票後端回應錯誤（' + j.error + '）。';
         if (j.error === 'bad_code') { lsSet('jm-code', null); code = ''; }
         return false;
       }

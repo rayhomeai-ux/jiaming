@@ -1,19 +1,29 @@
 /**
+ * @OnlyCurrentDoc
+ * ↑ 讓這支程式只能存取它所綁定的這一份試算表，碰不到你雲端硬碟裡的其他檔案。
+ */
+
+/**
  * 嘉名：家族投票後端（Google Apps Script，綁定在一份 Google 試算表上）
  *
  * 設定方式請看儲存庫的 README.md「設定家族投票」。
  * 需要在「專案設定 → 指令碼屬性」新增兩個屬性：
- *   FAMILY_CODE  家人用的通關碼
+ *   FAMILY_CODE  家人用的通關碼（建議 8 碼以上、英數混合）
  *   ADMIN_CODE   你自己用的管理碼（可移除任何人提名的名字）
  *
  * 資料表：
  *   data  每台裝置一列：id、ballot（提名，JSON）、votes（投票與留言，JSON）、更新時間
  *   結果   每次有人投票後自動重算，方便直接在試算表裡看
+ *
+ * 防暴力猜碼：10 分鐘內通關碼錯誤累計 30 次，就暫停受理所有請求，
+ * 直到連續 10 分鐘沒有新的錯誤嘗試為止。
  */
 
 var DATA_SHEET = 'data';
 var SUMMARY_SHEET = '結果';
-var MAX_BODY = 40000; // 單一儲存格上限 50,000 字元，留一點餘裕
+var MAX_BODY = 40000;      // 單一儲存格上限 50,000 字元，留一點餘裕
+var FAIL_LIMIT = 30;       // 鎖定前允許的錯誤次數
+var FAIL_WINDOW = 600;     // 秒；也是鎖定時間
 
 function doGet() {
   return out_({ ok: true, service: 'jiaming' });
@@ -23,12 +33,21 @@ function doPost(e) {
   var req;
   try { req = JSON.parse(e.postData.contents); } catch (err) { return out_({ ok: false, error: 'bad_json' }); }
 
+  var cache = CacheService.getScriptCache();
+  var fails = Number(cache.get('fails') || 0);
+  if (fails >= FAIL_LIMIT) return out_({ ok: false, error: 'locked' });
+
   var props = PropertiesService.getScriptProperties();
   var family = props.getProperty('FAMILY_CODE');
   var admin = props.getProperty('ADMIN_CODE');
-  var isAdmin = !!admin && req.code === admin;
-  var allowed = isAdmin || (!!family && req.code === family);
-  if (!allowed) return out_({ ok: false, error: 'bad_code' });
+  var code = String(req.code || '');
+  var isAdmin = !!admin && code === admin;
+  var allowed = isAdmin || (!!family && code === family);
+  if (!allowed) {
+    cache.put('fails', String(fails + 1), FAIL_WINDOW);
+    Utilities.sleep(1000); // 拖慢連續猜測
+    return out_({ ok: false, error: 'bad_code' });
+  }
 
   if (req.op === 'list') return out_({ ok: true, admin: isAdmin, rows: readRows_() });
 
@@ -50,6 +69,32 @@ function doPost(e) {
     return out_({ ok: true });
   }
   return out_({ ok: false, error: 'bad_op' });
+}
+
+/**
+ * 部署後在編輯器裡選這個函式按「執行」一次：
+ * 會觸發授權，並在「執行記錄」顯示設定是否完整（不會印出通關碼）。
+ */
+function checkSetup() {
+  var props = PropertiesService.getScriptProperties();
+  var family = props.getProperty('FAMILY_CODE') || '';
+  var admin = props.getProperty('ADMIN_CODE') || '';
+  var notes = [];
+  notes.push('FAMILY_CODE：' + (family ? family.length + ' 碼' : '未設定'));
+  notes.push('ADMIN_CODE：' + (admin ? admin.length + ' 碼' : '未設定'));
+  if (family && family.length < 8) notes.push('建議 FAMILY_CODE 改成 8 碼以上');
+  if (admin && admin.length < 8) notes.push('建議 ADMIN_CODE 改成 8 碼以上');
+  if (family && admin && family === admin) notes.push('兩個通關碼不應相同');
+  notes.push('目前錯誤次數：' + (CacheService.getScriptCache().get('fails') || 0) + '／' + FAIL_LIMIT);
+  dataSheet_();
+  notes.push('資料表：' + SpreadsheetApp.getActiveSpreadsheet().getName() + ' 可正常讀寫');
+  Logger.log(notes.join('\n'));
+}
+
+/** 鎖定時想立刻解除，可在編輯器執行這個函式。 */
+function resetLock() {
+  CacheService.getScriptCache().remove('fails');
+  Logger.log('已解除鎖定');
 }
 
 function sheet_(name, header) {
