@@ -8,3 +8,8 @@ Thumbs.db
 desktop.ini
 .vscode/
 node_modules/
+.private-terms.txt
+tests/.core_test.js
+dist/
+dev/raw/
+__pycache__/

@@ -19,7 +19,7 @@
 ## 檔案
 
 ```
-index.html           網站本體（所有計算都在瀏覽器裡進行）
+index.html           網站本體（建置產物，由 src/page.html 產生；所有計算都在瀏覽器裡進行）
 chars.json           13,048 個 Big5 字的康熙筆劃、五行、部首、拼音
 pairs.json           兩字同句的詩詞索引
 poems.json           詩詞句子
@@ -27,6 +27,12 @@ words.json           同音詞比對用的常用詞
 config.js            投票後端網址（部署 Apps Script 後填入）
 sheets-backend.js    把投票接到 Google 試算表的轉接層
 apps-script/Code.gs  投票後端程式，貼到 Google Apps Script
+src/                 網頁模板與嵌入資料（要改網頁請改這裡）
+tools/build.py       建置 index.html
+tests/               核心測試、投票端對端測試、模擬後端
+dev/data-pipeline/   重建 JSON 資料的管線
+docs/HANDOFF.md      交接文件（架構、規則、決策紀錄、待辦）
+CLAUDE.md            給 Claude Code 的專案說明
 ```
 
 ## 開啟網站（GitHub Pages）
@@ -84,12 +90,16 @@ apps-script/Code.gs  投票後端程式，貼到 Google Apps Script
 - 通關碼擋得住外人，但不是嚴格的身分驗證：知道通關碼的人換一台裝置就能再投一次。家人之間使用沒問題。
 - 八字粗算只在瀏覽器裡計算，輸入的出生資料不會送出。
 
-## 在自己電腦上執行
+## 在自己電腦上執行與開發
 
 ```bash
-python -m http.server 8000
-# 打開 http://localhost:8000/
+python -m http.server 8000          # 打開 http://localhost:8000/
+python tools/build.py               # 改完 src/ 後重新產生 index.html
+node tests/core.test.js             # 核心計算測試
+python tests/e2e_vote.py            # 投票流程測試（需要 Node 與 playwright）
 ```
+
+架構與規則請看 `docs/HANDOFF.md`。
 
 直接雙擊 `index.html` 不行，瀏覽器會擋下讀取 JSON 資料檔。
 
@@ -97,8 +107,7 @@ python -m http.server 8000
 
 | 資料 | 來源 | 授權 |
 | --- | --- | --- |
-| 康熙筆劃、字五行 | [godcong/fate](https://github.com/godcong/fate)、[shunshi-ai/kangxi-mcp](https://github.com/shunshi-ai/kangxi-mcp)（shunshi-kangxi-core） | MIT |
-| 部首、拼音、Big5 編碼 | [Unicode Unihan](https://www.unicode.org/charts/unihan.html) | Unicode License V3 |
+| 康熙筆劃、字五行、部首、拼音 | [babyname/fate](https://github.com/babyname/fate)、[shunshi-ai/kangxi-mcp](https://github.com/shunshi-ai/kangxi-mcp)（shunshi-kangxi-core） | MIT |
 | 詩詞句子 | 經 [holynova/gushi_namer](https://github.com/holynova/gushi_namer) 整理的《詩經》《楚辭》與唐詩宋詞（原文為公有領域） | — |
 | 同音詞 | [fxsjy/jieba](https://github.com/fxsjy/jieba) 詞庫 | MIT |
 | 八字、農曆 | [6tail/lunar-javascript](https://github.com/6tail/lunar-javascript)（由 jsDelivr CDN 載入） | MIT |
