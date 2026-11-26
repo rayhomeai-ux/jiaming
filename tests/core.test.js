@@ -63,4 +63,34 @@ t('女性忌數不套用在男生', () => {
   assert.equal(M.gridRate(21, BOY), '吉');
 });
 
+t('家人名字：解析全名與複姓', () => {
+  assert.deepEqual(M.famParse('張大明、王美麗 歐陽志,林陳秀英；阿嬤 大明'), ['大明', '美麗', '志', '秀英', '阿嬤']);
+  assert.deepEqual(M.famParse(''), []);
+  assert.deepEqual(M.famParse(undefined), []);
+});
+
+t('家人名字：同字、同音、只差聲調', () => {
+  const S = fam => ({ ...GIRL, fam });
+  const same = check(M.analyze('張', '語桐', S('志語')), '家人名字');
+  assert.equal(same.st, 'fail');
+  assert.match(same.det, /「語」和家人名字「志語」同字/);
+  const full = check(M.analyze('張', '語桐', S('張語桐')), '家人名字');
+  assert.equal(full.st, 'fail');
+  assert.match(full.det, /完全相同/);
+  const homo = check(M.analyze('張', '語桐', S('宇')), '家人名字');
+  assert.equal(homo.st, 'warn');
+  assert.match(homo.det, /同音/);
+  const near = check(M.analyze('張', '語桐', S('魚')), '家人名字');
+  assert.equal(near.st, 'info');
+  assert.match(near.det, /只差聲調/);
+  assert.equal(check(M.analyze('張', '語桐', S('大明')), '家人名字').st, 'pass');
+});
+
+t('家人名字：沒填就不檢查，同字扣 5 分', () => {
+  const a = M.analyze('張', '語桐', GIRL);
+  assert.equal(check(a, '家人名字'), undefined);
+  const S = { ...GIRL, fam: '志語' };
+  assert.equal(M.score(M.analyze('張', '語桐', S), S), M.score(a, GIRL) - 5);
+});
+
 console.log(`\n${n} tests passed`);

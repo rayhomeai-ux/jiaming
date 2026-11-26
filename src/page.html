@@ -39,6 +39,7 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(-
 label{font-size:14px;color:var(--mute);display:grid;gap:4px}
 select{font:inherit;font-size:15px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-height:36px}
 input[type=text],input[type=date],input[type=time]{font:inherit;font-size:18px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-height:46px}
+#fam{font-size:15px;padding:6px 10px;min-height:36px;width:11em}
 #sur{width:4.5em}#giv{width:7em}
 .fig{position:relative;height:440px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
 .fig>svg{position:absolute;inset:0;width:100%;height:100%}
@@ -129,6 +130,7 @@ h1 .sub{font-size:.42em;font-weight:500;color:var(--mute);margin-left:.4em;lette
 <span>三才 <span class="seg" data-k="sancai"><button data-v="mid">吉以上</button><button data-v="any">不凶即可</button></span></span>
 <span>生肖字根 <span class="seg" data-k="zod"><button data-v="part">部首＋部件</button><button data-v="radical">只看部首</button><button data-v="off">不看</button></span></span>
 <span>喜用五行 <span class="seg" id="xi"><button data-x="木">木</button><button data-x="火">火</button><button data-x="土">土</button><button data-x="金">金</button><button data-x="水">水</button></span></span>
+<span>家人名字 <input type="text" id="fam" placeholder="例：大明、美麗" autocomplete="off" aria-label="家人名字" title="父母、祖父母等長輩的名字，用頓號或空白分開，會檢查同字、同音。只存在這台裝置，不會上傳。"></span>
 </div>
 </div></header>
 
@@ -171,7 +173,7 @@ h1 .sub{font-size:.42em;font-weight:500;color:var(--mute);margin-left:.4em;lette
 </div>
 <div class="scroll"><table class="stack" id="g-table"><thead><tr><th></th><th>名字</th><th>讀音</th><th>筆劃</th><th>人 / 地 / 外 / 總</th><th>三才</th><th>生肖</th><th>字五行</th><th>出處</th><th>分數</th></tr></thead><tbody></tbody></table></div>
 <p><button class="btn ghost" type="button" id="g-more" hidden>再顯示 50 個</button></p>
-<p class="note">女孩字庫約 330 字、男孩字庫約 150 字，各標了一組常見名字用字（排序加分）。排序分數：三才、生肖宜用字根、字五行相生、喜用五行、聲調起伏、有詩詞出處會加分；相剋、不宜字根、菜市場名、同音、長輩用字會扣分；預設直接排除菜市場名（含同音）與長輩常用名、用字，取消勾選可看全部。出處只代表兩字出現在同一句，意境要自己讀過判斷。</p>
+<p class="note">女孩字庫約 330 字、男孩字庫約 150 字，各標了一組常見名字用字（排序加分）。排序分數：三才、生肖宜用字根、字五行相生、喜用五行、聲調起伏、有詩詞出處會加分；相剋、不宜字根、菜市場名、同音、長輩用字會扣分；預設直接排除菜市場名（含同音）與長輩常用名、用字，取消勾選可看全部；上方填了家人名字時，也會排除和家人同字、同音的名字。出處只代表兩字出現在同一句，意境要自己讀過判斷。</p>
 </section>
 
 <section class="view" id="v-bazi">
@@ -279,6 +281,16 @@ function eraCheck(giv,GG,S){const ci=cidx();const infos=ci?(ci.nm.get(giv)||[]):
  if(par.length)return{st:'info',det:'父母輩的常見名字',small:par.map(x=>ERA(x.y)+'出生'+gl(x.g)+'性第 '+x.r+' 名').join('、')};
  if(mid.length)return{st:'info',det:'有年代感的字：'+mid.map(x=>ex(x.c)).join('、'),small:'父母輩以上較常用，不一定要避開'};
  return{st:'pass',det:'沒有明顯的長輩用字',small:'比對內政部各世代常見名字與用字'}}
+const FUXING=new Set('歐陽 司馬 諸葛 上官 司徒 東方 西門 南宮 皇甫 公孫 夏侯 令狐 慕容 端木 鍾離 尉遲 長孫 宇文 呼延 澹臺 澹台 范姜 張簡 張廖'.split(' '));
+// 家人名字：以頓號、空白等分隔；三字以上視為全名並去掉姓（複姓去兩字，四字的冠夫姓保留後兩字）
+function famParse(s){const out=[];for(const t of String(s||'').split(/[^\p{Script=Han}]+/u)){const a=[...t];if(!a.length)continue;
+ const g=(a.length<3?a:FUXING.has(a[0]+a[1])?a.slice(2):a.length>3?a.slice(-2):a.slice(1)).join('');if(g&&!out.includes(g))out.push(g)}return out}
+function familyCheck(giv,GG,fams){const hits=[],plain=p=>p.replace(/\d/g,'');
+ for(const f of fams){if(f===giv){hits.push([3,'和家人的名字「'+f+'」完全相同']);continue}
+  for(const x of GG)for(const y of f){if(x.c===y){hits.push([3,'「'+y+'」和家人名字「'+f+'」同字']);continue}const z=ch(y);if(!z)continue;
+   if(z.pn===x.pn)hits.push([2,'「'+x.c+'」和「'+f+'」的「'+y+'」同音（'+x.py+'）']);else if(plain(z.pn)===plain(x.pn))hits.push([1,'「'+x.c+'」和「'+f+'」的「'+y+'」只差聲調'])}}
+ hits.sort((a,b)=>b[0]-a[0]);const lv=hits.length?hits[0][0]:0;
+ return{st:['pass','info','warn','fail'][lv],det:hits.length?hits.slice(0,3).map(h=>h[1]).join('；'):'沒有和家人同字或同音',small:'比對：'+fams.join('、')+'（只存在這台裝置，不會上傳）'}}
 function analyze(sur,giv,S){
  const SS=[...sur].map(ch),GG=[...giv].map(ch);if(!sur||!giv||SS.includes(undefined)||GG.includes(undefined)||GG.length>2||SS.length>2)return null;
  const all=[...SS,...GG],g=grids(SS,GG),cfg=wxn(g.tian)+wxn(g.ren)+wxn(g.di),scv=SC[cfg]||'—',checks=[];
@@ -299,6 +311,7 @@ function analyze(sur,giv,S){
  const cc=commonCheck(giv,GG,S);if(cc)add(cc.st,'菜市場名',cc.det,cc.small);const ec=eraCheck(giv,GG,S);add(ec.st,'年代感',ec.det,ec.small);
  const full=sur+giv;const fm=FAMOUS[full]||(full.startsWith('張嫣')?'「張嫣」是漢惠帝皇后的名字':'');const ci0=cidx(),sm=ci0&&ci0.same.get(full);
  add(fm||sm?'warn':'pass','撞名',fm||(sm?'全國第 '+sm.r+' 多的同姓同名（'+sm.c.toLocaleString('en')+' 人）':'不在同姓同名前 100 名或名人清單'),sm&&fm?'也是全國第 '+sm.r+' 多的同姓同名':'比對內政部同姓同名前 100 名與少數名人');
+ const fams=famParse(S.fam);if(fams.length){const fc=familyCheck(giv,GG,fams);add(fc.st,'家人名字',fc.det,fc.small)}
  const lv=Math.max(...all.map(x=>x.lv));add('pass','登記用字',lv===1?'Big5 常用字':'Big5 次常用字','戶政系統可直接輸入');
  if(S.xi.length){const hit=GG.filter(x=>S.xi.includes(x.w));add(hit.length?'pass':'warn','喜用五行',GG.map(x=>x.c+(x.w||'?')).join('、'),'喜用：'+S.xi.join('、')+(hit.length?'，有 '+hit.length+' 個字相合':'，名字沒有相合的字'))}
  return{SS,GG,all,g,cfg,scv,checks}}
@@ -309,6 +322,7 @@ function score(a,S){let s=0;const get=n=>a.checks.find(c=>c.name===n)||{};
  if(S.xi.length)s+=2*a.GG.filter(x=>S.xi.includes(x.w)).length;
  s+=get('聲調').st==='pass'?1:-1;s+=get('同音詞').st==='warn'?-2:0;s+=get('詩詞出處').st==='pass'?2:0;
  s+=get('撞名').st==='warn'?-3:0;s+=get('菜市場名').st==='warn'?-3:get('菜市場名').st==='info'?-1:0;s+=get('年代感').st==='warn'?-3:get('年代感').st==='info'?-1:0;s+=get('筆劃資料').st==='warn'?-1:0;s+=get('筆劃陰陽').st==='warn'?-1:0;s+=get('外格').st==='warn'?-2:0;
+ s+=get('家人名字').st==='fail'?-5:get('家人名字').st==='warn'?-3:get('家人名字').st==='info'?-1:0;
  const TP=S.gender==='m'?TOP_M:TOP_F;s+=2*a.GG.filter(x=>TP.has(x.c)).length;s-=a.all.filter(x=>x.lv>1).length;if(LISTED.has(a.SS.map(x=>x.c).join('')+a.GG.map(x=>x.c).join('')))s+=1;return s}
 // CORE-END
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -330,7 +344,7 @@ function setRule(k,v){S[k]=['jinv','wxrel','wai'].includes(k)?+v:v;store.set('nm
 const MOBILE=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(navigator.maxTouchPoints>1&&/Macintosh/i.test(navigator.userAgent));
 const lineHref=t=>'https://line.me/R/share?text='+encodeURIComponent(t);
 function lineBtn(act,text){if(MOBILE)return'<a class="btn ghost sm" data-act="'+act+'" href="'+esc(lineHref(text()))+'" target="_blank" rel="noopener">用 LINE 分享</a>';return'<button class="btn ghost sm" type="button" data-act="'+act+'" title="LINE 電腦版不支援分享連結，會先複製文字">複製後貼到 LINE</button>'}
-function flagNote(A){const c=A.checks.find(x=>x.name==='菜市場名'),e=A.checks.find(x=>x.name==='年代感');const t=[];if(c&&c.st!=='pass')t.push((c.st==='warn'?'菜市場：':'')+c.det);if(e&&e.st==='warn')t.push(e.det);return t.join('；')}
+function flagNote(A){const c=A.checks.find(x=>x.name==='菜市場名'),e=A.checks.find(x=>x.name==='年代感'),f=A.checks.find(x=>x.name==='家人名字');const t=[];if(f&&(f.st==='fail'||f.st==='warn'))t.push(f.st==='fail'?'與家人名字同字':'與家人名字同音');if(c&&c.st!=='pass')t.push((c.st==='warn'?'菜市場：':'')+c.det);if(e&&e.st==='warn')t.push(e.det);return t.join('；')}
 const wxChip=w=>w?'<span class="wx w'+esc(w)+'">'+esc(w)+'</span>':'';
 const ST={pass:'通過',warn:'注意',fail:'不符',info:'參考'};
 function drawChart(a){const s=$('#chart'),W=s.clientWidth,H=s.clientHeight;if(!a||!W){s.innerHTML='';return}
@@ -353,7 +367,7 @@ function renderCheck(){const sur=$('#sur').value.trim(),giv=$('#giv').value.trim
  $('#verdict').textContent=nm+'：'+(four?'四格全吉':'四格未全吉')+'，三才'+a.scv;$('#vsub').textContent=a.checks.length+' 項檢查：'+cnt.pass+' 通過、'+cnt.warn+' 注意、'+cnt.fail+' 不符'+(cnt.info?'、'+cnt.info+' 參考':'');
  $('#checks').innerHTML=a.checks.map(c=>`<li><span class="tag ${c.st}">${ST[c.st]}</span><span class="ck">${esc(c.name)}</span><span class="det">${esc(c.det)}${c.small?'<small>'+esc(c.small)+'</small>':''}</span></li>`).join('')}
 let GEN=[],shown=50;
-function runGen(){const must=$('#g-must').value.trim(),not=new Set([...$('#g-not').value]),add=[...$('#g-add').value].filter(c=>C.has(c));const agree=$('#g-agree').checked,nocom=$('#g-nocommon').checked,noold=$('#g-noold').checked;let xc=0,xo=0;
+function runGen(){const must=$('#g-must').value.trim(),not=new Set([...$('#g-not').value]),add=[...$('#g-add').value].filter(c=>C.has(c));const agree=$('#g-agree').checked,nocom=$('#g-nocommon').checked,noold=$('#g-noold').checked;let xc=0,xo=0,xf=0;
  const sur=($('#g-sur').value.trim()||S.sur||'張'),L=+$('#g-len').value;const SS=[...sur].map(ch);
  if(SS.includes(undefined)||SS.length>2){$('#g-info').textContent='查不到這個姓氏的字，請確認（最多兩個字）。';GEN=[];drawGen();return}
  const miss=[...must].filter(c=>!C.has(c));if(miss.length){$('#g-info').textContent='字庫查不到「'+miss.join('')+'」，請確認必含字。';GEN=[];drawGen();return}
@@ -364,10 +378,10 @@ function runGen(){const must=$('#g-must').value.trim(),not=new Set([...$('#g-not
   const g=grids(SS,nm.map(ch));
   const ok=[['ren'],['di'],['zong'],['wai',1]].every(([k,w])=>{if(w&&L===1)return true;const r=gridRate(g[k],S,w);return r==='吉'||(w&&!S.wai&&r!=='忌女')});if(!ok)continue;
   const cfg=wxn(g.tian)+wxn(g.ren)+wxn(g.di);if(scClass(SC[cfg],S.sancai)<1)continue;
-  const A=analyze(sur,nm.join(''),S);if(A.checks.some(c=>c.st==='fail'))continue;
+  const A=analyze(sur,nm.join(''),S);const fc=A.checks.find(c=>c.name==='家人名字');if(fc&&(fc.st==='fail'||fc.st==='warn')){xf++;continue}if(A.checks.some(c=>c.st==='fail'))continue;
   if(nocom&&A.checks.find(c=>c.name==='菜市場名').st==='warn'){xc++;continue}if(noold&&A.checks.find(c=>c.name==='年代感').st==='warn'){xo++;continue}out.push([score(A,S),A])}
  const key=A=>A.GG.map(x=>x.c).join('');out.sort((p,q)=>q[0]-p[0]||key(p[1]).localeCompare(key(q[1]),'zh-Hant'));GEN=out;shown=50;
- $('#g-info').textContent=sur+'姓'+(S.gender==='m'?'男孩':'女孩')+'、屬'+S.zodiac+'，'+(L===1?'單名':'雙名')+'：字庫 '+pool.length+' 字，檢查 '+tried.toLocaleString()+' 種組合，符合目前標準的有 '+out.length.toLocaleString()+' 個'+(xc||xo?'（另排除菜市場名 '+xc+' 個、長輩用字 '+xo+' 個）':'')+'。'+(auto.length?'「'+auto.join('')+'」不在'+(S.gender==='m'?'男孩':'女孩')+'字庫，已自動加入。':'');drawGen()}
+ $('#g-info').textContent=sur+'姓'+(S.gender==='m'?'男孩':'女孩')+'、屬'+S.zodiac+'，'+(L===1?'單名':'雙名')+'：字庫 '+pool.length+' 字，檢查 '+tried.toLocaleString()+' 種組合，符合目前標準的有 '+out.length.toLocaleString()+' 個'+(xc||xo||xf?'（另排除'+[xc&&'菜市場名 '+xc+' 個',xo&&'長輩用字 '+xo+' 個',xf&&'與家人名字同字或同音 '+xf+' 個'].filter(Boolean).join('、')+'）':'')+'。'+(auto.length?'「'+auto.join('')+'」不在'+(S.gender==='m'?'男孩':'女孩')+'字庫，已自動加入。':'');drawGen()}
 function drawGen(){const tb=$('#g-table tbody');tb.innerHTML=GEN.slice(0,shown).map(([sc,A])=>{const key=nk(A.SS.map(x=>x.c).join(''),A.GG.map(x=>x.c).join('')),nm=disp(key);const g=A.g;const get=n=>A.checks.find(c=>c.name===n);const pl=get('詩詞出處');
   const zz=a=>a.checks.find(c=>c.name.startsWith('生肖'));return`<tr><td><button class="star" data-f="${esc(key)}" aria-pressed="${FAV.includes(key)}" aria-label="收藏">${FAV.includes(key)?'★':'☆'}</button></td><td><button class="nm" data-n="${esc(key)}">${esc(nm)}</button>${LISTED.has(nm)||flagNote(A)?'<br><span class="note">'+esc([LISTED.has(nm)?'已討論':'',flagNote(A)].filter(Boolean).join('；'))+'</span>':''}</td><td>${esc(A.all.map(x=>x.py).join(' '))}</td><td class="n">${A.all.map(x=>x.k).join('・')}</td><td class="n">${[g.ren,g.di,g.wai,g.zong].join(' / ')}</td><td>${esc(A.cfg+' '+A.scv)}</td><td>${esc(zz(A).det)}</td><td>${A.GG.map(x=>wxChip(x.w)).join('')}<span class="note">${esc(get('字五行').small.split('；')[0])}</span></td><td class="quote">${pl.st==='pass'?esc(pl.det):''}</td><td class="n">${sc}</td></tr>`}).join('')||'<tr><td colspan="10">沒有符合條件的名字，試著放寬上方的判斷標準。</td></tr>';
  $('#g-more').hidden=GEN.length<=shown}
@@ -404,6 +418,7 @@ $('#g-sur').addEventListener('change',()=>{const v=$('#g-sur').value.trim();if(v
 $('#zsel').innerHTML=[...ZN].map(z=>'<option value="'+z+'">'+z+'</option>').join('');
 $('#zsel').addEventListener('change',()=>{S.zodiac=$('#zsel').value;store.set('nm-set',S);GEN=[];route()});
 $('#sur').value=S.sur;$('#g-sur').value=S.sur;if(S.sur!=='張')$('#giv').value='';
+$('#fam').value=S.fam||'';$('#fam').addEventListener('change',()=>{S.fam=$('#fam').value.trim();store.set('nm-set',S);GEN=[];route()});
 $('#f-check').addEventListener('submit',e=>e.preventDefault());$('#f-bazi').addEventListener('submit',e=>e.preventDefault());
 $('#g-run').addEventListener('click',runGen);$('#g-more').addEventListener('click',()=>{shown+=50;drawGen()});
 for(const id of['#b-date','#b-time'])$(id).addEventListener('input',renderBazi);

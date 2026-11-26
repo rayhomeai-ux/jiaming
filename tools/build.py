@@ -62,7 +62,7 @@ def main():
 
     core = site.split('// CORE-START')[1].split('// CORE-END')[0]
     exports = ('C,PAIR,WT,WN,LISTED,setPoem:p=>{POEM=p},analyze,grids,score,rate,wxn,SC,POOL_F,POOL_M,'
-               'gridRate,scClass,ch,ZOD,NM,cidx,commonCheck,eraCheck')
+               'gridRate,scClass,ch,ZOD,NM,cidx,commonCheck,eraCheck,famParse,familyCheck')
     (ROOT / 'tests' / '.core_test.js').write_text(core + '\nmodule.exports={' + exports + '};\n', encoding='utf-8', newline='\n')
 
     if '--artifact' in sys.argv:
