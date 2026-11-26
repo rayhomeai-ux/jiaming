@@ -57,16 +57,17 @@ def main():
     check_private(base)
 
     site = base.replace('__GH_HEAD__', '<script src="config.js"></script>\n<script src="sheets-backend.js"></script>')
-    (ROOT / 'index.html').write_text(site, encoding='utf-8')
+    # 一律寫出 LF：Windows 上預設會寫成 CRLF，產物就和儲存庫裡的不一樣
+    (ROOT / 'index.html').write_text(site, encoding='utf-8', newline='\n')
 
     core = site.split('// CORE-START')[1].split('// CORE-END')[0]
     exports = ('C,PAIR,WT,WN,LISTED,setPoem:p=>{POEM=p},analyze,grids,score,rate,wxn,SC,POOL_F,POOL_M,'
                'gridRate,scClass,ch,ZOD,NM,cidx,commonCheck,eraCheck')
-    (ROOT / 'tests' / '.core_test.js').write_text(core + '\nmodule.exports={' + exports + '};\n', encoding='utf-8')
+    (ROOT / 'tests' / '.core_test.js').write_text(core + '\nmodule.exports={' + exports + '};\n', encoding='utf-8', newline='\n')
 
     if '--artifact' in sys.argv:
         (ROOT / 'dist').mkdir(exist_ok=True)
-        (ROOT / 'dist' / 'artifact.html').write_text(base.replace('__GH_HEAD__', ''), encoding='utf-8')
+        (ROOT / 'dist' / 'artifact.html').write_text(base.replace('__GH_HEAD__', ''), encoding='utf-8', newline='\n')
         print('dist/artifact.html written')
 
     print(f'index.html written ({len(site):,} chars)')
