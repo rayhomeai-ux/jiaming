@@ -112,6 +112,7 @@ python tests/e2e_vote.py       # 10 項投票流程測試（mock 後端執行真
 - 網站：推送到 `main`，GitHub Pages 約一分鐘內自動更新。
 - 投票後端：改 `Code.gs` 後，Ray 要手動貼到 Apps Script，並用「管理部署作業 → 編輯 → 新版本」部署，網址不變。
 - `index.html` 目前與 `tools/build.py` 的輸出逐位元相同；改網頁請改 `src/page.html`。
+- 網站圖示（朱紅印章底、白色「嘉」，Noto Serif TC 900）由 `python tools/make_icons.py` 產生根目錄的 `favicon-32.png`、`icon-192.png`、`apple-touch-icon.png`；需要 playwright 與系統安裝的 Noto Serif TC。
 
 ## 7. 隱私與安全
 

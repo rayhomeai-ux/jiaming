@@ -29,6 +29,7 @@ sheets-backend.js    把投票接到 Google 試算表的轉接層
 apps-script/Code.gs  投票後端程式，貼到 Google Apps Script
 src/                 網頁模板與嵌入資料（要改網頁請改這裡）
 tools/build.py       建置 index.html
+tools/make_icons.py  產生網站圖示（favicon-32.png、icon-192.png、apple-touch-icon.png）
 tests/               核心測試、投票端對端測試、模擬後端
 dev/data-pipeline/   重建 JSON 資料的管線
 docs/HANDOFF.md      交接文件（架構、規則、決策紀錄、待辦）

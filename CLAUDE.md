@@ -34,6 +34,7 @@ config.js              投票後端網址
 sheets-backend.js      把 Google 試算表後端包成 Claude 共用資料的介面
 apps-script/Code.gs    投票後端（貼到 Google Apps Script）
 tools/build.py         建置
+tools/make_icons.py    產生網站圖示（根目錄 *.png）
 tests/                 core.test.js、e2e_vote.py、mock_gas.js（以記憶體試算表執行真正的 Code.gs）
 dev/data-pipeline/     重建根目錄 JSON 的資料管線（需要原始資料，見其 README）
 docs/HANDOFF.md        交接文件
